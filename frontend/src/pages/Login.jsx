@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Brain, User, Lock, Camera, AlertTriangle, Loader2 } from 'lucide-react';
+import { Brain, User, Lock, Camera, AlertTriangle, Loader2, School, Eye, EyeOff } from 'lucide-react';
 import FaceAuthModal from '../components/FaceAuthModal';
 
 export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoogleLogin, handleForgotPassword }) {
+  const [roleTab, setRoleTab] = useState('student'); // 'student' or 'admin-teacher'
   const [username, setUsername] = useState('');
+  const [schoolCode, setSchoolCode] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,120 +70,182 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070B18] text-slate-100 p-4 font-sans relative overflow-hidden w-full">
-      {/* Glow animations */}
-      <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-primary-600/15 rounded-full blur-[140px] animate-pulse" />
-      <div className="absolute bottom-[10%] right-[5%] w-[450px] h-[450px] bg-violet-600/15 rounded-full blur-[140px]" />
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#070B18] text-slate-800 dark:text-slate-100 p-4 font-sans relative overflow-hidden w-full transition-colors duration-300">
+      {/* Dark theme glow animations */}
+      <div className="hidden dark:block absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[140px] animate-pulse" />
+      <div className="hidden dark:block absolute bottom-[10%] right-[5%] w-[450px] h-[450px] bg-violet-600/10 rounded-full blur-[140px]" />
       
       {/* Form Card */}
-      <div className="w-full max-w-md bg-[#161D30]/60 backdrop-blur-xl rounded-3xl p-8 shadow-[0_0_50px_0_rgba(99,102,241,0.15)] relative z-10 border border-primary-500/20 hover:border-primary-500/30 transition-all duration-500">
+      <div className="w-full max-w-md bg-white dark:bg-[#161D30]/65 border border-slate-250/60 dark:border-primary-500/20 rounded-3xl p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] dark:shadow-[0_0_50px_0_rgba(99,102,241,0.12)] relative z-10 hover:border-slate-300 dark:hover:border-primary-500/30 transition-all duration-500">
         
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-tr from-primary-500 to-indigo-500 rounded-2xl mb-4 shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-            <Brain className="h-9 w-9 text-white" />
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-primary-200">
-            LuminaGrade <span className="text-primary-400">AI</span>
+        {/* Header Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
+            Login to Your Account
           </h1>
-          <p className="text-xs text-slate-400 mt-2 font-medium tracking-wide">COGNITIVE ACADEMIC CONSOLE</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Enter your credentials to access your account
+          </p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-6">
-          {error && (
-            <div className="p-3 bg-rose-950/40 border border-rose-800/60 text-rose-350 rounded-xl text-xs flex items-center gap-2 text-left">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-450" />
-              <span>{error}</span>
-            </div>
-          )}
+        {/* Dynamic Role Tab Selectors */}
+        <div className="flex gap-4 my-6">
+          {/* Student Tab */}
+          <button
+            type="button"
+            onClick={() => setRoleTab('student')}
+            className={`flex-1 flex flex-col items-center justify-center py-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
+              roleTab === 'student'
+                ? 'border-blue-500 bg-blue-50/70 text-blue-600 dark:border-blue-500 dark:bg-blue-950/20 dark:text-blue-400 font-bold shadow-sm'
+                : 'border-slate-150 bg-slate-50/40 text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111726]/40 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <School className={`h-6 w-6 mb-2 ${roleTab === 'student' ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}`} />
+            <span className="text-xs tracking-wide">Student</span>
+          </button>
 
-          {success && (
-            <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 rounded-xl text-xs flex items-center gap-2 text-left">
-              <span className="h-4 w-4 shrink-0 text-emerald-400 font-bold">✓</span>
-              <span>{success}</span>
-            </div>
-          )}
+          {/* Admin/Teacher Tab */}
+          <button
+            type="button"
+            onClick={() => setRoleTab('admin-teacher')}
+            className={`flex-1 flex flex-col items-center justify-center py-4 rounded-2xl border transition-all duration-300 cursor-pointer ${
+              roleTab === 'admin-teacher'
+                ? 'border-blue-500 bg-blue-50/70 text-blue-600 dark:border-blue-500 dark:bg-blue-950/20 dark:text-blue-400 font-bold shadow-sm'
+                : 'border-slate-150 bg-slate-50/40 text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111726]/40 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <User className={`h-6 w-6 mb-2 ${roleTab === 'admin-teacher' ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}`} />
+            <span className="text-xs tracking-wide">Admin/Teacher</span>
+          </button>
+        </div>
 
+        {/* Errors & Success Banners */}
+        {error && (
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 rounded-xl text-xs flex items-center gap-2 text-left">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500 dark:text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs flex items-center gap-2 text-left">
+            <span className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400 font-bold">✓</span>
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Input Form */}
+        <form onSubmit={onSubmit} className="space-y-4">
+          
+          {/* Username / Roll Number Input */}
           <div className="text-left">
-            <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-widest mb-2">Username / Roll Number</label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-500" />
-              <input 
-                type="text" 
-                className="w-full pl-11 pr-4 py-3 bg-[#090D1C] border border-slate-800 text-white placeholder-slate-650 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all text-sm" 
-                placeholder="e.g. admin or S1001" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Username
+            </label>
+            <input 
+              type="text" 
+              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
+              placeholder="Enter your username" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
           </div>
 
+          {/* School Code Input */}
           <div className="text-left">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-widest">Secret Password</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              School Code
+            </label>
+            <input 
+              type="text" 
+              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
+              placeholder="Enter your school code" 
+              value={schoolCode}
+              onChange={(e) => setSchoolCode(e.target.value)}
+            />
+          </div>
+
+          {/* Password Input with Visibility Eye toggle */}
+          <div className="text-left">
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Password
+              </label>
               <button
                 type="button"
                 onClick={handleForgotPasswordClick}
-                className="text-[10px] text-primary-400 hover:text-primary-300 font-bold transition-colors cursor-pointer"
+                className="text-xs text-blue-500 hover:text-blue-600 dark:text-primary-400 dark:hover:text-primary-300 font-bold transition-colors cursor-pointer"
               >
-                Forgot Password?
+                Forgot?
               </button>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-500" />
               <input 
-                type="password" 
-                className="w-full pl-11 pr-4 py-3 bg-[#090D1C] border border-slate-800 text-white placeholder-slate-655 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all text-sm" 
-                placeholder="••••••••" 
+                type={showPassword ? "text" : "password"} 
+                className="w-full pl-4 pr-12 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
+                placeholder="Enter your password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-3">
+          {/* Login Actions Button Row */}
+          <div className="flex gap-3 pt-2">
             <button 
               type="submit" 
               disabled={loading} 
-              className="flex-1 py-3.5 bg-gradient-to-r from-primary-600 to-indigo-650 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer text-sm"
+              className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer text-sm shadow-md shadow-blue-500/10"
             >
               {loading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <span>Sign In</span>
+                <span>Login as {roleTab === 'student' ? 'Student' : 'Admin/Teacher'}</span>
               )}
             </button>
 
+            {/* Face scan biometric button */}
             <button 
               type="button"
               onClick={() => {
                 if (!username.trim()) {
-                  setError("Please fill in your Username first before performing face login.");
+                  setError("Please enter your Username first before performing face login.");
                   return;
                 }
                 setFaceModalOpen(true);
               }}
-              className="py-3.5 px-4 bg-[#090D1C] hover:bg-[#111726] border border-slate-800 text-slate-300 font-semibold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="py-3.5 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 dark:bg-[#090D1C] dark:hover:bg-[#111726] dark:border-slate-800 dark:text-slate-300 font-semibold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               title="Sign in with Face Recognition"
             >
-              <Camera className="h-5 w-5 text-primary-450" />
+              <Camera className="h-5 w-5 text-blue-500 dark:text-primary-450" />
             </button>
           </div>
         </form>
 
-        <div className="relative my-6">
+        {/* Separator */}
+        <div className="relative my-5">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-850"></div>
+            <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-bold">
-            <span className="bg-[#161D30] px-3 text-slate-500">Or continue with</span>
+            <span className="bg-white dark:bg-[#161D30] px-3 text-slate-400 dark:text-slate-500">Or continue with</span>
           </div>
         </div>
 
+        {/* Google SSO chooser */}
         <button 
           type="button"
           onClick={() => setGoogleChooserOpen(true)}
-          className="w-full py-3 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl flex items-center justify-center gap-3 cursor-pointer text-sm shadow-sm transition-all"
+          className="w-full py-3 bg-white hover:bg-slate-55 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-800 dark:text-slate-200 dark:bg-[#090D1C] dark:hover:bg-[#111726] font-bold rounded-xl flex items-center justify-center gap-3 cursor-pointer text-sm shadow-sm transition-all"
         >
           <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
             <path
@@ -190,12 +256,14 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
           <span>Sign in with Google</span>
         </button>
 
-        <div className="mt-8 pt-6 border-t border-slate-800/85 text-center text-xs text-slate-500 space-y-2">
-          <p>Admin / Teacher: <span className="text-slate-300 font-mono">admin / teacher</span> (pwd: <span className="text-slate-300 font-mono">admin123 / teacher123</span>)</p>
-          <p>Students: <span className="text-slate-300 font-mono">student / alice</span> (pwd: <span className="text-slate-300 font-mono">student123 / alice123</span>)</p>
+        {/* Demo Credentials Help Center */}
+        <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/85 text-center text-xs text-slate-450 dark:text-slate-500 space-y-1">
+          <p>Admin / Teacher: <span className="text-slate-600 dark:text-slate-350 font-mono">admin / teacher</span> (pwd: <span className="text-slate-600 dark:text-slate-350 font-mono">admin123 / teacher123</span>)</p>
+          <p>Students: <span className="text-slate-600 dark:text-slate-350 font-mono">student / alice</span> (pwd: <span className="text-slate-600 dark:text-slate-350 font-mono">student123 / alice123</span>)</p>
         </div>
       </div>
 
+      {/* Face Authentication Modal */}
       <FaceAuthModal 
         isOpen={faceModalOpen}
         onClose={() => setFaceModalOpen(false)}
@@ -203,17 +271,18 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
         title="Biometric Face Login Scan"
       />
 
+      {/* Google chooser pop-up */}
       {googleChooserOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="bg-[#161D30] border border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6 text-left relative z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#161D30] border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl p-6 text-left relative z-50">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="font-extrabold text-lg text-white">Google Accounts</h3>
-                <p className="text-xs text-slate-400 mt-1">Choose an account to sign in</p>
+                <h3 className="font-extrabold text-lg text-slate-900 dark:text-white font-bold">Google Accounts</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Choose an account to sign in</p>
               </div>
               <button 
                 onClick={() => setGoogleChooserOpen(false)}
-                className="text-slate-400 hover:text-white font-bold cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -234,13 +303,13 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
                       setLoading(false);
                     }
                   }}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-[#090D1C] hover:bg-[#111726] border border-slate-800 text-left transition-all cursor-pointer group"
+                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-[#090D1C] dark:hover:bg-[#111726] border border-slate-200 dark:border-slate-800 text-left transition-all cursor-pointer group"
                 >
-                  <div className="h-9 w-9 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center font-bold">
+                  <div className="h-9 w-9 bg-blue-500/10 text-blue-600 dark:bg-primary-600/10 dark:text-primary-400 rounded-xl flex items-center justify-center font-bold">
                     {account.avatar}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-slate-200 group-hover:text-primary-400 transition-colors">{account.name}</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-500 dark:group-hover:text-primary-400 transition-colors">{account.name}</p>
                     <p className="text-xs text-slate-500">{account.email}</p>
                   </div>
                 </button>
