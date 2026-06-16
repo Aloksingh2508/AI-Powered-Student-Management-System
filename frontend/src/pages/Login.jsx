@@ -14,6 +14,7 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
   const [loading, setLoading] = useState(false);
   const [faceModalOpen, setFaceModalOpen] = useState(false);
   const [googleChooserOpen, setGoogleChooserOpen] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
 
   const googleAccounts = [
     { name: "John Doe", email: "john.doe@school.edu", avatar: "JD" },
@@ -316,6 +317,43 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
                   </div>
                 </button>
               ))}
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                  <span className="bg-white dark:bg-[#161D30] px-2 text-slate-400 dark:text-slate-500">Or use custom email</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <input 
+                  type="email" 
+                  placeholder="Enter your student email" 
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-450 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm shadow-sm"
+                  value={customEmail}
+                  onChange={(e) => setCustomEmail(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!customEmail.trim()) return;
+                    setGoogleChooserOpen(false);
+                    setError('');
+                    setLoading(true);
+                    try {
+                      await handleGoogleLogin(customEmail.trim());
+                    } catch (err) {
+                      setError(err.message || "Google login failed.");
+                      setLoading(false);
+                    }
+                  }}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs active:scale-[0.98] transition-all cursor-pointer shadow-sm shadow-blue-500/10"
+                >
+                  Sign in with this Email
+                </button>
+              </div>
             </div>
           </div>
         </div>
