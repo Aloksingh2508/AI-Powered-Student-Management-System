@@ -259,11 +259,6 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
           <span>Sign in with Google</span>
         </button>
 
-        {/* Demo Credentials Help Center */}
-        <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/85 text-center text-xs text-slate-450 dark:text-slate-500 space-y-1">
-          <p>Admin / Teacher: <span className="text-slate-600 dark:text-slate-350 font-mono">admin / teacher</span> (pwd: <span className="text-slate-600 dark:text-slate-350 font-mono">admin123 / teacher123</span>)</p>
-          <p>Students: <span className="text-slate-600 dark:text-slate-350 font-mono">student / alice</span> (pwd: <span className="text-slate-600 dark:text-slate-350 font-mono">student123 / alice123</span>)</p>
-        </div>
       </div>
 
       {/* Face Authentication Modal */}
