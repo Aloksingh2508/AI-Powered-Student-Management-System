@@ -137,34 +137,36 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
         {/* Input Form */}
         <form onSubmit={onSubmit} className="space-y-4">
           
-          {/* Username / Roll Number Input */}
+          {/* Username / Email Input */}
           <div className="text-left">
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Username
+              {roleTab === 'student' ? 'Username' : 'Email'}
             </label>
             <input 
               type="text" 
               className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
-              placeholder="Enter your username" 
+              placeholder={roleTab === 'student' ? "Enter your username" : "Enter your email"} 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
 
-          {/* School Code Input */}
-          <div className="text-left">
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              School Code
-            </label>
-            <input 
-              type="text" 
-              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
-              placeholder="Enter your school code" 
-              value={schoolCode}
-              onChange={(e) => setSchoolCode(e.target.value)}
-            />
-          </div>
+          {/* School Code Input (Only visible for Student tab) */}
+          {roleTab === 'student' && (
+            <div className="text-left">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                School Code
+              </label>
+              <input 
+                type="text" 
+                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#090D1C] text-slate-900 dark:text-white placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm" 
+                placeholder="Enter your school code" 
+                value={schoolCode}
+                onChange={(e) => setSchoolCode(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Password Input with Visibility Eye toggle */}
           <div className="text-left">
