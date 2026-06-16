@@ -129,6 +129,15 @@ def create_subject(db: Session, name: str, code: str) -> Subject:
     db.refresh(db_subject)
     return db_subject
 
+def delete_subject(db: Session, subject_id: int) -> bool:
+    db_subject = db.query(Subject).filter(Subject.id == subject_id).first()
+    if not db_subject:
+        return False
+    db.delete(db_subject)
+    db.commit()
+    return True
+
+
 # --- Mark CRUD ---
 def get_marks_for_student(db: Session, student_id: int, semester: Optional[str] = None) -> List[Mark]:
     query = db.query(Mark).filter(Mark.student_id == student_id)

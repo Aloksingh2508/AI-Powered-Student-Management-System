@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Brain, User, Lock, Camera, AlertTriangle, Loader2 } from 'lucide-react';
 import FaceAuthModal from '../components/FaceAuthModal';
 
-export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoogleLogin }) {
+export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoogleLogin, handleForgotPassword }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [faceModalOpen, setFaceModalOpen] = useState(false);
   const [googleChooserOpen, setGoogleChooserOpen] = useState(false);
@@ -19,6 +20,7 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
     try {
       await handlePasswordLogin(username, password);
@@ -30,6 +32,7 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
 
   const onFaceCapture = async (base64Image) => {
     setError('');
+    setSuccess('');
     setLoading(true);
     setFaceModalOpen(false);
     try {
@@ -39,6 +42,25 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
       await handleFaceLogin(username, base64Image);
     } catch (err) {
       setError(err.message || "Face login failed.");
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPasswordClick = async () => {
+    setError('');
+    setSuccess('');
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      setError("Please enter your Username or Roll Number first to request a password reset.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const msg = await handleForgotPassword(trimmedUsername);
+      setSuccess(msg || "Your password has been reset to the administrator's password.");
+    } catch (err) {
+      setError(err.message || "Failed to reset password.");
+    } finally {
       setLoading(false);
     }
   };
@@ -70,6 +92,13 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
             </div>
           )}
 
+          {success && (
+            <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 rounded-xl text-xs flex items-center gap-2 text-left">
+              <span className="h-4 w-4 shrink-0 text-emerald-400 font-bold">✓</span>
+              <span>{success}</span>
+            </div>
+          )}
+
           <div className="text-left">
             <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-widest mb-2">Username / Roll Number</label>
             <div className="relative">
@@ -86,13 +115,22 @@ export default function Login({ handlePasswordLogin, handleFaceLogin, handleGoog
           </div>
 
           <div className="text-left">
-            <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-widest mb-2">Secret Password</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-widest">Secret Password</label>
+              <button
+                type="button"
+                onClick={handleForgotPasswordClick}
+                className="text-[10px] text-primary-400 hover:text-primary-300 font-bold transition-colors cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-500" />
               <input 
                 type="password" 
                 className="w-full pl-11 pr-4 py-3 bg-[#090D1C] border border-slate-800 text-white placeholder-slate-655 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all text-sm" 
-                placeholder="•••••••• (optional for students)" 
+                placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

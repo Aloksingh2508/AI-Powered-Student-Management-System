@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  User, TrendingUp, Brain, FileText, AlertTriangle, MessageSquare, Award, BookOpen, LogOut 
+  User, TrendingUp, Brain, FileText, AlertTriangle, MessageSquare, Award, BookOpen, LogOut, Book
 } from 'lucide-react';
 
 export default function Sidebar({ userRole, activeTab, setActiveTab, handleLogout, classFilter, setClassFilter, handleExportExcel }) {
@@ -54,6 +54,18 @@ export default function Sidebar({ userRole, activeTab, setActiveTab, handleLogou
           >
             <BookOpen className="h-5 w-5" />
             <span>AI Exam Generator</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('subjects')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              activeTab === 'subjects' 
+                ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-md shadow-primary-600/25' 
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#111726]/45 hover:text-primary-600 dark:hover:text-primary-450'
+            }`}
+          >
+            <Book className="h-5 w-5" />
+            <span>Manage Subjects</span>
           </button>
         </>
       )}

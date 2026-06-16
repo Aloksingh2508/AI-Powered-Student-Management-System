@@ -11,6 +11,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+# Safe schema update for password_reset_requested column
+try:
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE users ADD COLUMN password_reset_requested BOOLEAN DEFAULT 0"))
+except Exception:
+    # Pass if column already exists or tables don't exist yet
+    pass
+
 def get_db():
     db = SessionLocal()
     try:

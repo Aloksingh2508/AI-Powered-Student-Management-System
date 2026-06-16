@@ -4,6 +4,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from backend.app.config import settings
 
 def export_student_pdf(
     student_info: Dict[str, Any], 
@@ -76,7 +77,7 @@ def export_student_pdf(
     story = []
 
     # Title Banner
-    story.append(Paragraph("EDUMIND AI - ACADEMIC PROGRESS REPORT", title_style))
+    story.append(Paragraph(f"{settings.SCHOOL_NAME.upper()} - ACADEMIC PROGRESS REPORT", title_style))
     story.append(Spacer(1, 10))
 
     # Student Details Grid
@@ -309,7 +310,7 @@ def export_student_resume(student_info: Dict[str, Any], cgpa: float, skills: str
     
     edu_data = [
         [
-            Paragraph("<b>EduMind AI Secondary School</b>", body_style),
+            Paragraph(f"<b>{settings.SCHOOL_NAME}</b>", body_style),
             Paragraph("<b>Graduation: 2026</b>", ParagraphStyle('RightText', parent=body_style, alignment=2))
         ],
         [

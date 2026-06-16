@@ -30,6 +30,18 @@ def create_subject(
         raise HTTPException(status_code=400, detail="Subject code already exists")
     return crud_service.create_subject(db, subject_data.name, subject_data.code)
 
+@router.delete("/subjects/{subject_id}")
+def delete_subject(
+    subject_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(auth_service.get_teacher_or_admin)
+):
+    success = crud_service.delete_subject(db, subject_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    return {"detail": "Subject deleted successfully"}
+
+
 @router.get("/student/{student_id}", response_model=List[schemas.MarkResponse])
 def get_student_marks(
     student_id: int, 

@@ -18,6 +18,7 @@ import StudentReport from './pages/StudentReport';
 import AIHub from './pages/AIHub';
 import ExamGenerator from './pages/ExamGenerator';
 import Chatbot from './pages/Chatbot';
+import Subjects from './pages/Subjects';
 
 export default function App() {
   // --- Auth States ---
@@ -194,6 +195,20 @@ export default function App() {
 
     const data = await res.json();
     setSessionData(data);
+  };
+
+  const handleForgotPassword = async (usernameInput) => {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: usernameInput })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to reset password.");
+    }
+    return data.detail;
   };
 
   const setSessionData = (data) => {
@@ -388,6 +403,7 @@ export default function App() {
         handlePasswordLogin={handlePasswordLogin} 
         handleFaceLogin={handleFaceLogin} 
         handleGoogleLogin={handleGoogleLogin} 
+        handleForgotPassword={handleForgotPassword}
       />
     );
   }
@@ -429,6 +445,8 @@ export default function App() {
               dashboardStats={dashboardStats}
               dashboardLoading={dashboardLoading}
               darkMode={darkMode}
+              userRole={userRole}
+              fetchAPI={fetchAPI}
             />
           )}
 
@@ -485,6 +503,15 @@ export default function App() {
               subjects={subjects}
               fetchAPI={fetchAPI}
               difficulty="Medium"
+            />
+          )}
+
+          {/* Subjects list */}
+          {userRole !== 'Student' && activeTab === 'subjects' && (
+            <Subjects 
+              subjects={subjects}
+              loadSubjectsList={loadSubjectsList}
+              fetchAPI={fetchAPI}
             />
           )}
 

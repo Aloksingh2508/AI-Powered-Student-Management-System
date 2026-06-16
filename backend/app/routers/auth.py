@@ -43,6 +43,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             db.add(user)
             db.commit()
             db.refresh(user)
+        
+        # Verify the student's password
+        if not auth_service.verify_password(form_data.password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
     else:
         user = crud_service.get_user_by_username(db, form_data.username)
         if not user or not auth_service.verify_password(form_data.password, user.hashed_password):
@@ -160,3 +168,115 @@ def google_login(payload: dict, db: Session = Depends(get_db)):
         "username": user.username,
         "student_id": user.student_id
     }
+
+@router.post("/forgot-password")
+def forgot_password(payload: dict, db: Session = Depends(get_db)):
+    username = payload.get("username")
+    if not username:
+        raise HTTPException(status_code=400, detail="Username or Roll Number is required")
+        
+    # Find student by roll number
+    student = db.query(crud_service.Student).filter(func.lower(crud_service.Student.roll_number) == func.lower(username)).first()
+    
+    user = None
+    if student:
+        user = db.query(crud_service.User).filter(crud_service.User.student_id == student.id).first()
+        if not user:
+            username_val = student.roll_number.lower()
+            hashed_pwd = auth_service.get_password_hash(f"{student.roll_number}123")
+            user = crud_service.User(
+                username=username_val,
+                hashed_password=hashed_pwd,
+                role="Student",
+                student_id=student.id
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+    else:
+        user = crud_service.get_user_by_username(db, username)
+        
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user.role != "Student":
+        raise HTTPException(status_code=400, detail="Only student accounts can request password resets.")
+        
+    # Flag that password reset is requested
+    user.password_reset_requested = True
+    db.commit()
+    
+    return {"detail": "Your password reset request has been submitted to the administrator."}
+
+@router.get("/reset-requests")
+def list_reset_requests(
+    db: Session = Depends(get_db),
+    current_user = Depends(auth_service.get_current_user)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Unauthorized. Only Admin can manage password requests.")
+        
+    requests = db.query(crud_service.User).filter(crud_service.User.password_reset_requested == True).all()
+    
+    result = []
+    for r in requests:
+        # Get student details if available
+        student_name = ""
+        roll_number = ""
+        if r.student_id:
+            student = db.query(crud_service.Student).filter(crud_service.Student.id == r.student_id).first()
+            if student:
+                student_name = f"{student.first_name} {student.last_name}"
+                roll_number = student.roll_number
+                
+        result.append({
+            "id": r.id,
+            "username": r.username,
+            "role": r.role,
+            "student_name": student_name,
+            "roll_number": roll_number
+        })
+    return result
+
+@router.post("/approve-reset/{user_id}")
+def approve_reset(
+    user_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user = Depends(auth_service.get_current_user)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Unauthorized. Only Admin can manage password requests.")
+        
+    new_password = payload.get("new_password")
+    if not new_password:
+        raise HTTPException(status_code=400, detail="New password is required")
+        
+    user = db.query(crud_service.User).filter(crud_service.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Update password and clear request flag
+    user.hashed_password = auth_service.get_password_hash(new_password)
+    user.password_reset_requested = False
+    db.commit()
+    
+    return {"detail": "Password reset approved and updated successfully."}
+
+@router.post("/reject-reset/{user_id}")
+def reject_reset(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(auth_service.get_current_user)
+):
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Unauthorized. Only Admin can manage password requests.")
+        
+    user = db.query(crud_service.User).filter(crud_service.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.password_reset_requested = False
+    db.commit()
+    
+    return {"detail": "Password reset request rejected."}

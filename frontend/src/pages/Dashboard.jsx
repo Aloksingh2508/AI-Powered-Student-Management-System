@@ -1,12 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid 
 } from 'recharts';
 import { 
-  TrendingUp, GraduationCap, BarChart3, Loader2, Award, Zap, AlertTriangle 
+  TrendingUp, GraduationCap, BarChart3, Loader2, Award, Zap, AlertTriangle, Key, Check, X
 } from 'lucide-react';
 
-export default function Dashboard({ dashboardStats, dashboardLoading, darkMode }) {
+export default function Dashboard({ dashboardStats, dashboardLoading, darkMode, userRole, fetchAPI }) {
+  const [requests, setRequests] = useState([]);
+  const [loadingReqs, setLoadingReqs] = useState(false);
+
+  const loadRequests = async () => {
+    if (userRole !== 'Admin') return;
+    setLoadingReqs(true);
+    try {
+      const res = await fetchAPI('/auth/reset-requests');
+      const data = await res.json();
+      setRequests(data);
+    } catch (err) {
+      console.error("Failed to load reset requests:", err);
+    } finally {
+      setLoadingReqs(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRequests();
+  }, [userRole]);
+
+  const handleApprove = async (id, name) => {
+    const newPassword = prompt(`Enter new password for ${name}:`, "student123");
+    if (!newPassword) return;
+
+    try {
+      await fetchAPI(`/auth/approve-reset/${id}`, {
+        method: 'POST',
+        body: { new_password: newPassword }
+      });
+      alert(`Password updated successfully for ${name}.`);
+      loadRequests();
+    } catch (err) {
+      alert("Failed to approve password reset: " + err.message);
+    }
+  };
+
+  const handleReject = async (id, name) => {
+    if (!confirm(`Are you sure you want to dismiss the password request for ${name}?`)) return;
+
+    try {
+      await fetchAPI(`/auth/reject-reset/${id}`, {
+        method: 'POST'
+      });
+      alert(`Request dismissed for ${name}.`);
+      loadRequests();
+    } catch (err) {
+      alert("Failed to reject request: " + err.message);
+    }
+  };
+
   if (dashboardLoading) {
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-3">
@@ -127,6 +178,51 @@ export default function Dashboard({ dashboardStats, dashboardLoading, darkMode }
         </div>
 
       </div>
+
+      {/* Admin Password Reset Queue */}
+      {userRole === 'Admin' && (
+        <div className="bg-white dark:bg-[#161D30] rounded-2xl p-6 border border-slate-200/50 dark:border-[#222F4D]/60 shadow-sm mt-6">
+          <h3 className="text-sm font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-slate-400">
+            <Key className="h-5 w-5 text-primary-500" />
+            <span>Pending Student Password Resets ({requests.length})</span>
+          </h3>
+          
+          {loadingReqs ? (
+            <div className="py-8 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+            </div>
+          ) : requests.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {requests.map(req => (
+                <div key={req.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-100/50 dark:bg-[#0B0F19]/40 border border-slate-200/20 dark:border-[#222F4D]/40">
+                  <div className="text-left">
+                    <p className="text-sm font-bold dark:text-white">{req.student_name || req.username}</p>
+                    <p className="text-[10px] text-slate-455 mt-0.5">Roll Number: <span className="font-mono font-bold text-primary-500">{req.roll_number || 'N/A'}</span></p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApprove(req.id, req.student_name || req.username)}
+                      className="p-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-605 hover:text-white rounded-lg transition-colors cursor-pointer"
+                      title="Approve Reset"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleReject(req.id, req.student_name || req.username)}
+                      className="p-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-lg transition-colors cursor-pointer"
+                      title="Dismiss Request"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-450 py-4 text-center">No pending password reset requests.</p>
+          )}
+        </div>
+      )}
 
     </div>
   );

@@ -7,6 +7,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "EduMind AI - Student Result Management Platform"
+    SCHOOL_NAME: str = os.getenv("SCHOOL_NAME", "LuminaGrade Academic Institute")
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./student_results.db")
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "super_secret_key_change_me_in_production_123456")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")

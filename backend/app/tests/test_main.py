@@ -70,6 +70,70 @@ def test_system_flow():
     assert response.status_code == 200
     assert "learning_speed" in response.json()
     
+    # 9. Verify Forgot Password functionality
+    print("[TEST] Verifying Forgot Password functionality...")
+    # Query an existing student roll number from the database dynamically
+    from backend.app.database.connection import SessionLocal
+    from backend.app.models.student import Student
+    db_session = SessionLocal()
+    any_student = db_session.query(Student).first()
+    db_session.close()
+    
+    if any_student:
+        student_roll = any_student.roll_number
+        # Student login with incorrect password should fail
+        response = client.post("/api/auth/login", data={"username": student_roll, "password": "wrong_password"})
+        assert response.status_code == 401
+        
+        # Request forgot password for student
+        response = client.post("/api/auth/forgot-password", json={"username": student_roll})
+        assert response.status_code == 200
+        assert "submitted to the administrator" in response.json()["detail"]
+        
+        # Admin gets reset requests list
+        response = client.get("/api/auth/reset-requests", headers=headers)
+        assert response.status_code == 200
+        requests = response.json()
+        student_req = [r for r in requests if r["roll_number"] == student_roll]
+        assert len(student_req) > 0
+        user_id = student_req[0]["id"]
+        
+        # Admin approves reset request with a new password
+        response = client.post(f"/api/auth/approve-reset/{user_id}", json={"new_password": "studentnew123"}, headers=headers)
+        assert response.status_code == 200
+        assert "approved and updated" in response.json()["detail"]
+        
+        # Student login with new password should succeed
+        response = client.post("/api/auth/login", data={"username": student_roll, "password": "studentnew123"})
+        assert response.status_code == 200
+        assert response.json()["role"] == "Student"
+    else:
+        print("[WARN] No students found in database to test forgot password.")
+    
+    # 10. Verify Subject Management (Add and Delete)
+    print("[TEST] Verifying Subject Management (Add and Delete)...")
+    # Add subject
+    response = client.post("/api/marks/subjects", json={"name": "History", "code": "HIST101"}, headers=headers)
+    assert response.status_code == 200
+    subject_id = response.json()["id"]
+    
+    # Verify in list
+    response = client.get("/api/marks/subjects", headers=headers)
+    assert response.status_code == 200
+    subjects_list = [s["name"] for s in response.json()]
+    assert "History" in subjects_list
+    
+    # Delete subject
+    response = client.delete(f"/api/marks/subjects/{subject_id}", headers=headers)
+    assert response.status_code == 200
+    assert "deleted successfully" in response.json()["detail"]
+    
+    # Verify no longer in list
+    response = client.get("/api/marks/subjects", headers=headers)
+    assert response.status_code == 200
+    subjects_list = [s["name"] for s in response.json()]
+    assert "History" not in subjects_list
+    
     print("\n==========================================================")
     print(" ALL BACKEND API MODULE TESTS COMPLETED SUCCESSFULLY! ")
     print("==========================================================")
