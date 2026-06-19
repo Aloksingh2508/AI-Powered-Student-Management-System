@@ -1,4 +1,27 @@
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const normalizeUrl = (url) => {
+  if (!url) return "http://localhost:8000/api";
+  let cleanUrl = url.trim();
+  if (cleanUrl.endsWith('/')) {
+    cleanUrl = cleanUrl.slice(0, -1);
+  }
+  if (!cleanUrl.endsWith('/api')) {
+    cleanUrl = cleanUrl + '/api';
+  }
+  return cleanUrl;
+};
+
+export let API_BASE = normalizeUrl(localStorage.getItem('custom_api_url') || import.meta.env.VITE_API_URL);
+
+export const setAPIBase = (url) => {
+  if (url) {
+    const cleanUrl = normalizeUrl(url);
+    localStorage.setItem('custom_api_url', cleanUrl);
+    API_BASE = cleanUrl;
+  } else {
+    localStorage.removeItem('custom_api_url');
+    API_BASE = normalizeUrl(import.meta.env.VITE_API_URL);
+  }
+};
 
 export const getAuthToken = () => localStorage.getItem('token') || '';
 export const getUserRole = () => localStorage.getItem('role') || '';
@@ -41,4 +64,4 @@ export const fetchAPI = async (path, options = {}) => {
   return res;
 };
 
-export { API_BASE };
+// API_BASE is already exported inline above

@@ -51,8 +51,22 @@ def register_user(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/login", response_model=schemas.Token, tags=["Authentication"])
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    input_username = form_data.username
+    
+    # If the user typed an email, resolve it to their registered username or roll number
+    if "@" in input_username:
+        # Check if it is a student's email
+        student_by_email = db.query(models.Student).filter(func.lower(models.Student.email) == func.lower(input_username)).first()
+        if student_by_email:
+            input_username = student_by_email.roll_number
+        else:
+            # Handle admin/teacher emails (e.g., admin@school.edu -> admin)
+            prefix = input_username.split("@")[0]
+            if prefix in ["admin", "teacher"]:
+                input_username = prefix
+
     # Check if the username matches a Student's roll number
-    student = db.query(models.Student).filter(func.lower(models.Student.roll_number) == func.lower(form_data.username)).first()
+    student = db.query(models.Student).filter(func.lower(models.Student.roll_number) == func.lower(input_username)).first()
     
     if student:
         # If student exists, find or create their student User account
@@ -70,7 +84,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             db.commit()
             db.refresh(user)
     else:
-        user = crud.get_user_by_username(db, form_data.username)
+        user = crud.get_user_by_username(db, input_username)
         if not user or not auth.verify_password(form_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

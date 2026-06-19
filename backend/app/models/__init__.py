@@ -4,3 +4,4 @@ from backend.app.models.student import Student, Attendance
 from backend.app.models.academic import Subject, Mark, ExamPaper, Scholarship
 from backend.app.models.ai import AIAnalysis
 from backend.app.models.gamification import Badge, StudentBadge
+from backend.app.models.settings import SchoolSettings

@@ -19,6 +19,7 @@ import AIHub from './pages/AIHub';
 import ExamGenerator from './pages/ExamGenerator';
 import Chatbot from './pages/Chatbot';
 import Subjects from './pages/Subjects';
+import AdminPanel from './pages/AdminPanel';
 
 export default function App() {
   // --- Auth States ---
@@ -404,6 +405,7 @@ export default function App() {
         handleFaceLogin={handleFaceLogin} 
         handleGoogleLogin={handleGoogleLogin} 
         handleForgotPassword={handleForgotPassword}
+        onSetupComplete={setSessionData}
       />
     );
   }
@@ -511,6 +513,13 @@ export default function App() {
             <Subjects 
               subjects={subjects}
               loadSubjectsList={loadSubjectsList}
+              fetchAPI={fetchAPI}
+            />
+          )}
+
+          {/* Admin Panel */}
+          {userRole === 'Admin' && activeTab === 'admin-panel' && (
+            <AdminPanel 
               fetchAPI={fetchAPI}
             />
           )}

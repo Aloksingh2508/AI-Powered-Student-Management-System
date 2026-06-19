@@ -12,5 +12,7 @@ class User(Base):
     student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=True)
     face_image_path = Column(String, nullable=True)  # Path to saved face template image
     password_reset_requested = Column(Boolean, default=False, server_default="0")
+    full_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
 
     student = relationship("Student", back_populates="user")

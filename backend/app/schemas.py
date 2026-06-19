@@ -21,6 +21,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     student_id: Optional[int] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
@@ -30,9 +32,15 @@ class UserResponse(UserBase):
     id: int
     student_id: Optional[int]
     face_image_path: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 # Student Schemas
 class StudentBase(BaseModel):

@@ -21,7 +21,9 @@ def create_user(db: Session, user: UserCreate) -> User:
         username=user.username,
         hashed_password=hashed_pwd,
         role=user.role,
-        student_id=user.student_id
+        student_id=user.student_id,
+        full_name=user.full_name,
+        email=user.email
     )
     db.add(db_user)
     db.commit()
