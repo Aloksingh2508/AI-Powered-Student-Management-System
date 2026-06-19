@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, CartesianGrid 
 } from 'recharts';
-import { Check, X, AlertCircle, Camera, CheckSquare } from 'lucide-react';
+import { Check, X, AlertCircle, Camera, CheckSquare, Loader2 } from 'lucide-react';
 import FaceAuthModal from '../components/FaceAuthModal';
 
 export default function Attendance({ students, fetchAPI, classFilter, semester }) {
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceMap, setAttendanceMap] = useState({}); // studentId -> status (Present/Absent/Late)
   const [verifiedMap, setVerifiedMap] = useState({}); // studentId -> boolean
+  const [percentageMap, setPercentageMap] = useState({}); // studentId -> percentage
+  const [saveLoading, setSaveLoading] = useState(false);
   const [faceVerifyStudent, setFaceVerifyStudent] = useState(null);
   
   // Scatter Plot dataset for Attendance impact analysis
@@ -22,12 +24,22 @@ export default function Attendance({ students, fetchAPI, classFilter, semester }
   const loadAttendanceData = async () => {
     const freshMap = {};
     const freshVerify = {};
+    const freshPct = {};
     for (const s of students) {
       freshMap[s.id] = "Present";
       freshVerify[s.id] = false;
+      freshPct[s.id] = 100;
       try {
         const res = await fetchAPI(`/students/attendance/student/${s.id}`);
         const data = await res.json();
+        
+        // Calculate historical attendance percentage
+        if (data && data.length > 0) {
+          const presents = data.filter(r => r.status === "Present").length;
+          const pct = Math.round((presents / data.length) * 100);
+          freshPct[s.id] = pct;
+        }
+
         const todayRecord = data.find(r => r.date === attendanceDate);
         if (todayRecord) {
           freshMap[s.id] = todayRecord.status;
@@ -39,6 +51,7 @@ export default function Attendance({ students, fetchAPI, classFilter, semester }
     }
     setAttendanceMap(freshMap);
     setVerifiedMap(freshVerify);
+    setPercentageMap(freshPct);
   };
 
   const loadAttendanceImpactData = async () => {
@@ -95,8 +108,54 @@ export default function Attendance({ students, fetchAPI, classFilter, semester }
       });
       setAttendanceMap(prev => ({ ...prev, [studentId]: statusStr }));
       setVerifiedMap(prev => ({ ...prev, [studentId]: isFaceVerified }));
+      
+      // Update percentage dynamically
+      const res = await fetchAPI(`/students/attendance/student/${studentId}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const presents = data.filter(r => r.status === "Present").length;
+        const pct = Math.round((presents / data.length) * 100);
+        setPercentageMap(prev => ({ ...prev, [studentId]: pct }));
+      }
+      
+      loadAttendanceImpactData();
     } catch (err) {
       alert("Error saving attendance record: " + err.message);
+    }
+  };
+
+  const markAllStatus = (statusStr) => {
+    const newMap = {};
+    for (const s of students) {
+      newMap[s.id] = statusStr;
+    }
+    setAttendanceMap(newMap);
+  };
+
+  const handleSaveEntireSheet = async () => {
+    setSaveLoading(true);
+    try {
+      const savePromises = students.map(async (s) => {
+        const statusStr = attendanceMap[s.id] || "Present";
+        const isFaceVerified = verifiedMap[s.id] || false;
+        return fetchAPI("/students/attendance", {
+          method: 'POST',
+          body: {
+            student_id: s.id,
+            date: attendanceDate,
+            status: statusStr,
+            verified_by_face: isFaceVerified
+          }
+        });
+      });
+      await Promise.all(savePromises);
+      alert("Daily attendance sheet saved successfully!");
+      await loadAttendanceData();
+      await loadAttendanceImpactData();
+    } catch (err) {
+      alert("Error saving daily attendance: " + err.message);
+    } finally {
+      setSaveLoading(false);
     }
   };
 
@@ -135,14 +194,44 @@ export default function Attendance({ students, fetchAPI, classFilter, semester }
           <h2 className="text-lg font-black dark:text-white">Log Attendance Sheet</h2>
           <p className="text-xs text-slate-400 mt-1">Log attendance and verify student biometrics natively</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Selected Date:</label>
-          <input 
-            type="date" 
-            className="px-4 py-2 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-[#222F4D] text-slate-900 dark:text-slate-100 rounded-xl focus:outline-none font-bold text-sm"
-            value={attendanceDate}
-            onChange={(e) => setAttendanceDate(e.target.value)}
-          />
+        <div className="flex flex-wrap items-center gap-3 justify-end w-full sm:w-auto">
+          {/* Date input */}
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date:</label>
+            <input 
+              type="date" 
+              className="px-3 py-2 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-[#222F4D] text-slate-900 dark:text-slate-100 rounded-xl focus:outline-none font-bold text-xs"
+              value={attendanceDate}
+              onChange={(e) => setAttendanceDate(e.target.value)}
+            />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => markAllStatus('Present')}
+              className="px-2.5 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/45 border border-emerald-250 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              All Present
+            </button>
+            <button
+              type="button"
+              onClick={() => markAllStatus('Absent')}
+              className="px-2.5 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/45 border border-rose-250 dark:border-rose-800/40 text-rose-700 dark:text-rose-455 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              All Absent
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveEntireSheet}
+              disabled={saveLoading}
+              className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 dark:bg-primary-650 dark:hover:bg-primary-550 text-white rounded-xl text-xs font-bold active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+            >
+              {saveLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckSquare className="h-3.5 w-3.5" />}
+              <span>Save Sheet</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -165,7 +254,15 @@ export default function Attendance({ students, fetchAPI, classFilter, semester }
                 {students.map(s => (
                   <tr key={s.id} className="hover:bg-slate-100/20 dark:hover:bg-[#0B0F19]/10">
                     <td className="py-4 font-mono font-bold text-primary-500">{s.roll_number}</td>
-                    <td className="py-4 font-bold dark:text-white">{s.first_name} {s.last_name}</td>
+                    <td className="py-4 text-left">
+                      <span className="font-bold dark:text-white block leading-tight">{s.first_name} {s.last_name}</span>
+                      <span className="text-[10px] text-slate-400 mt-1 block font-semibold">
+                        Attendance Rate: {' '}
+                        <span className={`font-bold ${percentageMap[s.id] < 75 ? 'text-rose-500 dark:text-rose-455' : 'text-emerald-500 dark:text-emerald-450'}`}>
+                          {percentageMap[s.id] !== undefined ? `${percentageMap[s.id]}%` : '100%'}
+                        </span>
+                      </span>
+                    </td>
                     <td className="py-4 text-center">
                       {verifiedMap[s.id] ? (
                         <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wide bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 rounded-full">
